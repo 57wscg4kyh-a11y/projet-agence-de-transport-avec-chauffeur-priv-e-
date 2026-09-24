@@ -1,0 +1,87 @@
+1. Contexte — Pourquoi ce projet existe-t-il ?
+L'agence Prestige Drive propose un service de transport avec chauffeur privé sur des véhicules haut de gamme (citadines, berlines executive, berlines luxe, SUV, vans). Aujourd'hui, la gestion des réservations se fait de manière manuelle : appels téléphoniques, échanges par mail, planning tenu sur tableur. Cette organisation atteint ses limites avec la croissance de l'activité : erreurs de planning, doublons de réservation, manque de visibilité en temps réel sur la disponibilité des véhicules et des chauffeurs, facturation faite à la main. Le projet vise donc à doter l'agence d'un système d'information numérique adapté à son activité.
+
+2. Besoin — Quel problème doit-on résoudre ?
+Éliminer les erreurs et pertes de temps liées à la gestion manuelle des réservations
+Donner une visibilité en temps réel sur la disponibilité des véhicules et des chauffeurs
+Centraliser les informations clients, chauffeurs, véhicules et courses dans une base de données unique
+Sécuriser les données personnelles et bancaires des clients (conformité RGPD)
+Simplifier la facturation et le suivi administratif
+
+3. Objectif — Quel résultat veut-on obtenir ?
+Mettre en place une application web permettant :
+Aux clients de réserver un véhicule avec chauffeur en ligne, de manière autonome et rapide
+À l'agence de gérer sa flotte et ses chauffeurs efficacement, avec une vue centralisée
+De fiabiliser et d'automatiser la facturation
+De garantir une expérience utilisateur à la hauteur du positionnement haut de gamme de l'agence
+De respecter les obligations légales en matière de protection des données
+
+4. Utilisateurs — Qui va utiliser la solution ?
+client : particulier ou professionnel souhaitan reserver un vehicule avec chauffeur.
+chauffeur : salarie ou independant rattache a l'agence, execute les courses.
+administrateur : Gere la flotte, les chauffeurs, les reservations et la facturation.
+
+
+
+5. Fonctionnalités — Que doit permettre de faire la solution ?
+Côté client :
+Créer un compte / réserver en mode invité
+Choisir un type de véhicule (citadine, berline executive, berline luxe, SUV, van)
+Obtenir une estimation du tarif avant validation
+Réserver une course immédiate ou programmée
+Payer en ligne de manière sécurisée
+Suivre l'avancement de sa course
+Consulter son historique de réservations
+Noter/évaluer le chauffeur
+Côté chauffeur :
+Consulter les courses qui lui sont attribuées
+Mettre à jour son statut (disponible, en course, hors service)
+Valider le début et la fin d'une course
+Côté administrateur :
+Gérer la flotte de véhicules (ajout, modification, mise hors service)
+Gérer les chauffeurs (affectation, planning, disponibilité)
+Superviser l'ensemble des réservations en temps réel
+Générer les factures et suivre les paiements
+Consulter des statistiques (courses réalisées, chiffre d'affaires, taux d’occupation)
+
+
+Les contraintes : 
+
+
+1.1.Infrastructure
+Mise en place d'une infrastructure minimale composée de plusieurs machines virtuelles : un serveur web (hébergement du site vitrine et de l'application), un serveur de base de données, et un serveur de gestion des tickets. Architecture documentée sous forme de schéma réseau (adressage IP, rôles de chaque machine), réalisable en local avec un outil de virtualisation (VirtualBox/VMware/Proxmox).
+2. Recensement des ressources
+Établissement d'un inventaire documenté : machines (physiques/virtuelles), logiciels et services utilisés (SGBD, serveur web, outil de tickets), comptes utilisateurs, noms de domaine, API externes. Ce recensement est formalisé dans un tableau de bord ou une fiche d'inventaire tenue à jour tout au long du projet.
+3. Site vitrine
+Création d'un site vitrine accessible sur Internet, présentant l'agence, son activité, sa flotte de véhicules et ses services. Développé en HTML/CSS (éventuellement avec un CMS léger type WordPress), hébergé sur le même serveur web ou un hébergement dédié, distinct de l'application de réservation.
+4. Application web
+Développement de l'application de réservation de courses avec chauffeur, répondant au besoin réel identifié (digitalisation des réservations) :
+Base de données : MySQL/PostgreSQL, reliée à l'application (clients, chauffeurs, véhicules, réservations, factures)
+Service externe : intégration d'une API de cartographie (ex. OpenStreetMap/Google Maps) pour le calcul d'itinéraire et d'estimation tarifaire, et/ou une API de paiement en mode test (Stripe sandbox)
+5. Gestion des tickets
+Mise en place d'un outil de gestion des tickets (ex. GLPI) pour centraliser les demandes des utilisateurs (clients, chauffeurs, admin), en s'appuyant sur les principes ITIL : catégorisation des incidents/demandes, priorisation, cycle de vie du ticket (ouvert → en cours → résolu → clôturé).
+6. Gestion des accès
+Définition de profils d'accès différenciés (client, chauffeur, administrateur) avec authentification sécurisée et droits limités selon le rôle (principe du moindre privilège). Gestion des mots de passe hachés (bcrypt), et pour l'infrastructure, gestion des comptes systèmes/serveurs avec droits restreints.
+7. Continuité de service
+Prévoir des mesures simples de résilience : redondance minimale (ex. serveur de secours ou snapshot de VM), documentation d'une procédure de reprise en cas de panne du serveur principal, pour garantir la disponibilité de l'application de réservation.
+8. Sauvegarde
+Mise en place d'une politique de sauvegarde régulière de la base de données et des fichiers applicatifs (sauvegarde planifiée, ex. script cron + stockage externe/distant). Un test de restauration sera réalisé et documenté pour valider la fiabilité de la sauvegarde.
+9. Règles d'utilisation et de sécurité
+Rédaction d'une charte d'utilisation et de sécurité (bonnes pratiques mots de passe, usage des comptes, confidentialité des données clients) communiquée aux utilisateurs (chauffeurs, personnel administratif) et intégrée en annexe du projet.
+10. Gestion des demandes utilisateurs
+Les demandes (support technique, questions clients, incidents chauffeurs) sont collectées via le système de tickets (GLPI), suivies, affectées à un responsable et traitées selon un processus documenté.
+11. Gestion des incidents système et réseau
+Les incidents liés à l'infrastructure (panne serveur, problème réseau) sont identifiés via supervision (ex. outil de monitoring basique), consignés dans l'outil de tickets, traités puis documentés dans une fiche incident.
+12. Gestion des incidents applicatifs
+Les bugs ou anomalies de l'application (erreur de réservation, bug de paiement) sont remontés via le système de tickets, suivis avec un statut d'avancement, corrigés et documentés (avant/après correction).
+13. Analyse du trafic
+Mise en place d'indicateurs de suivi de l'utilisation (nombre de visites du site vitrine, nombre de réservations effectuées, taux de conversion) via un outil d'analyse (ex. logs serveur, Google Analytics ou équivalent open source type Matomo).
+14. Planification du projet
+Utilisation d'un outil de gestion de projet (ex. Trello, GanttProject, ou Jira) pour planifier les phases : cahier des charges, conception, développement, tests, mise en production, avec un diagramme de Gantt.
+15. Indicateurs de suivi
+Définition d'indicateurs mesurant l'avancement (% de tâches réalisées, respect des délais) et les résultats (nombre de fonctionnalités livrées, taux de réussite des tests), suivis régulièrement dans l'outil de gestion de projet.
+16. Tests et validation
+Rédaction d'un plan de test (jeux d'essai pour chaque fonctionnalité : réservation, paiement, gestion des accès) avant la mise en production. Résultats consignés dans un document de recette (attendu vs obtenu).
+17. Mise en production
+Préparation d'un environnement de production distinct de l'environnement de développement, procédure de déploiement documentée (étapes, configuration, vérifications post-déploiement), avec une phase de recette finale avant l'ouverture au public.
+
