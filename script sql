@@ -1,0 +1,132 @@
+-- ============================================================
+-- Base de données : agence_chauffeur
+-- Agence de prestation de chauffeur privé
+-- SGBD : MySQL 8 / MariaDB (phpMyAdmin)
+-- ============================================================
+
+DROP DATABASE IF EXISTS agence_chauffeur;
+CREATE DATABASE agence_chauffeur
+    CHARACTER SET utf8mb4
+    COLLATE utf8mb4_unicode_ci;
+USE agence_chauffeur;
+
+-- ------------------------------------------------------------
+-- Tables indépendantes (aucune clé étrangère)
+-- ------------------------------------------------------------
+
+CREATE TABLE client (
+    id_client      INT AUTO_INCREMENT,
+    type_client    ENUM('particulier','entreprise') NOT NULL DEFAULT 'particulier',
+    nom            VARCHAR(50)  NOT NULL,
+    prenom         VARCHAR(50)  NULL,
+    raison_sociale VARCHAR(100) NULL,
+    email          VARCHAR(100) NOT NULL,
+    telephone      VARCHAR(20)  NOT NULL,
+    adresse        VARCHAR(150) NULL,
+    date_creation  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT pk_client PRIMARY KEY (id_client),
+    CONSTRAINT uq_client_email UNIQUE (email)
+) ENGINE=InnoDB;
+
+CREATE TABLE chauffeur (
+    id_chauffeur       INT AUTO_INCREMENT,
+    nom                VARCHAR(50)  NOT NULL,
+    prenom             VARCHAR(50)  NOT NULL,
+    email              VARCHAR(100) NOT NULL,
+    telephone          VARCHAR(20)  NOT NULL,
+    num_permis         VARCHAR(30)  NOT NULL,
+    num_carte_pro      VARCHAR(30)  NOT NULL,
+    validite_carte_pro DATE         NOT NULL,
+    statut             ENUM('actif','en_conge','inactif') NOT NULL DEFAULT 'actif',
+    CONSTRAINT pk_chauffeur PRIMARY KEY (id_chauffeur),
+    CONSTRAINT uq_chauffeur_email UNIQUE (email),
+    CONSTRAINT uq_chauffeur_permis UNIQUE (num_permis),
+    CONSTRAINT uq_chauffeur_carte_pro UNIQUE (num_carte_pro)
+) ENGINE=InnoDB;
+
+CREATE TABLE vehicule (
+    id_vehicule     INT AUTO_INCREMENT,
+    immatriculation VARCHAR(15) NOT NULL,
+    marque          VARCHAR(40) NOT NULL,
+    modele          VARCHAR(40) NOT NULL,
+    categorie       ENUM('berline','van','luxe') NOT NULL,
+    nb_places       TINYINT     NOT NULL,
+    date_controle   DATE        NULL,
+    statut          ENUM('disponible','maintenance','hors_service') NOT NULL DEFAULT 'disponible',
+    CONSTRAINT pk_vehicule PRIMARY KEY (id_vehicule),
+    CONSTRAINT uq_vehicule_immat UNIQUE (immatriculation),
+    CONSTRAINT ck_vehicule_places CHECK (nb_places > 0)
+) ENGINE=InnoDB;
+
+CREATE TABLE prestation (
+    id_prestation INT AUTO_INCREMENT,
+    libelle       VARCHAR(80)  NOT NULL,
+    mode_tarif    ENUM('forfait','horaire','kilometrique') NOT NULL,
+    tarif_base    DECIMAL(8,2) NOT NULL,
+    CONSTRAINT pk_prestation PRIMARY KEY (id_prestation),
+    CONSTRAINT ck_prestation_tarif CHECK (tarif_base >= 0)
+) ENGINE=InnoDB;
+
+-- ------------------------------------------------------------
+-- Table dépendant de client, chauffeur, vehicule et prestation
+-- ------------------------------------------------------------
+
+CREATE TABLE reservation (
+    id_reservation INT AUTO_INCREMENT,
+    id_client      INT          NOT NULL,
+    id_chauffeur   INT          NOT NULL,
+    id_vehicule    INT          NOT NULL,
+    id_prestation  INT          NOT NULL,
+    date_debut     DATETIME     NOT NULL,
+    date_fin       DATETIME     NOT NULL,
+    lieu_depart    VARCHAR(150) NOT NULL,
+    lieu_arrivee   VARCHAR(150) NULL,
+    nb_passagers   TINYINT      NOT NULL DEFAULT 1,
+    statut         ENUM('en_attente','confirmee','en_cours','terminee','annulee')
+                   NOT NULL DEFAULT 'en_attente',
+    prix_total     DECIMAL(10,2) NULL,
+    CONSTRAINT pk_reservation PRIMARY KEY (id_reservation),
+    CONSTRAINT ck_reservation_dates CHECK (date_fin > date_debut),
+    CONSTRAINT ck_reservation_passagers CHECK (nb_passagers > 0),
+    CONSTRAINT fk_reservation_client FOREIGN KEY (id_client)
+        REFERENCES client (id_client) ON UPDATE CASCADE ON DELETE RESTRICT,
+    CONSTRAINT fk_reservation_chauffeur FOREIGN KEY (id_chauffeur)
+        REFERENCES chauffeur (id_chauffeur) ON UPDATE CASCADE ON DELETE RESTRICT,
+    CONSTRAINT fk_reservation_vehicule FOREIGN KEY (id_vehicule)
+        REFERENCES vehicule (id_vehicule) ON UPDATE CASCADE ON DELETE RESTRICT,
+    CONSTRAINT fk_reservation_prestation FOREIGN KEY (id_prestation)
+        REFERENCES prestation (id_prestation) ON UPDATE CASCADE ON DELETE RESTRICT
+) ENGINE=InnoDB;
+
+CREATE INDEX idx_reservation_dates ON reservation (date_debut, date_fin);
+CREATE INDEX idx_reservation_chauffeur ON reservation (id_chauffeur, date_debut);
+
+-- ------------------------------------------------------------
+-- Tables de facturation
+-- ------------------------------------------------------------
+
+CREATE TABLE facture (
+    id_facture     INT AUTO_INCREMENT,
+    id_reservation INT           NOT NULL,
+    date_emission  DATE          NOT NULL,
+    montant_ht     DECIMAL(10,2) NOT NULL,
+    taux_tva       DECIMAL(4,2)  NOT NULL DEFAULT 10.00,
+    statut         ENUM('emise','payee','impayee') NOT NULL DEFAULT 'emise',
+    CONSTRAINT pk_facture PRIMARY KEY (id_facture),
+    CONSTRAINT uq_facture_reservation UNIQUE (id_reservation),
+    CONSTRAINT ck_facture_montant CHECK (montant_ht >= 0),
+    CONSTRAINT fk_facture_reservation FOREIGN KEY (id_reservation)
+        REFERENCES reservation (id_reservation) ON UPDATE CASCADE ON DELETE RESTRICT
+) ENGINE=InnoDB;
+
+CREATE TABLE paiement (
+    id_paiement   INT AUTO_INCREMENT,
+    id_facture    INT           NOT NULL,
+    date_paiement DATETIME      NOT NULL,
+    montant       DECIMAL(10,2) NOT NULL,
+    moyen         ENUM('carte','virement','especes','cheque') NOT NULL,
+    CONSTRAINT pk_paiement PRIMARY KEY (id_paiement),
+    CONSTRAINT ck_paiement_montant CHECK (montant > 0),
+    CONSTRAINT fk_paiement_facture FOREIGN KEY (id_facture)
+        REFERENCES facture (id_facture) ON UPDATE CASCADE ON DELETE RESTRICT
+) ENGINE=InnoDB;
